@@ -1,0 +1,50 @@
+let base_url = env("TESTFOSS_URL", "http://127.0.0.1:8105/");
+program = _lmcode_ cli="lmwebtest playwright";
+let b = pw.launch("chromium");
+let p = b.new_page();
+p.set_viewport(1100, 900);
+p.set_default_timeout(60000);
+p.goto(pw.env("TESTFOSS_URL"));
+p.wait_for_function("document.querySelector('#status')?.textContent.startsWith('Rendered Graph of y=1')");
+$return.title = p.title();
+$return.wasm_loaded = p.evaluate("performance.getEntriesByType('resource').some(entry => entry.name.includes('.wasm'))");
+$return.graph_pixels = p.evaluate("(() => { const canvas = document.querySelector('#canvas'); const pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data; let occupied = 0; for (let index = 0; index < pixels.length; index += 4) { if (pixels[index + 3] > 0 && (pixels[index] < 245 || pixels[index + 1] < 245 || pixels[index + 2] < 245)) occupied += 1; } return {width: canvas.width, height: canvas.height, occupied}; })()");
+let graph = p.evaluate("document.querySelector('#canvas').toDataURL()");
+p.select_option("#plot-type", "mandelbrot");
+p.wait_for_function("document.querySelector('#status')?.textContent.startsWith('Rendered Mandelbrot Set')");
+$return.mandelbrot_changed = graph != p.evaluate("document.querySelector('#canvas').toDataURL()");
+$return.mandelbrot_status = p.text_content("#status");
+p.select_option("#plot-type", "3d-plot");
+p.wait_for_function("document.querySelector('#status')?.textContent.startsWith('Rendered 3D Plot Demo')");
+p.locator("[id='3d-control']").expect("toBeVisible", "[]");
+p.evaluate("(() => { const el = document.querySelector('#pitch'); el.value = '30'; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); })()");
+p.wait_for_function("document.querySelector('#coord')?.textContent === 'Pitch:0.3, Yaw:0.5'");
+$return.pitch = p.locator("#pitch").input_value();
+$return.coord = p.text_content("#coord");
+$return.page_errors = p.page_errors();
+$return.failed_requests = p.failed_requests();
+$return.http_errors = p.http_errors();
+p.screenshot("testfoss/results/plotters.png", true);
+b.close();
+end _lmcode_
+
+let res = run_lmcode(program, {command: ["lmwebtest", "playwright", "--lmcode", "$DSLFILE"]});
+write_json("testfoss/results/browser.json", res);
+require(res.get("ok", false), json_stringify(res));
+let r = res.get("result", {});
+let graph = json_parse(r.get("graph_pixels", "{}"));
+require(r.get("title", "") == "Plotters WebAssembly Demo", r.get("title", ""));
+require(r.get("wasm_loaded", "") == "true", "The Plotters Wasm resource was not loaded");
+require(graph.get("width", 0) > 0 && graph.get("height", 0) > 0, "Missing Plotters canvas dimensions");
+require(graph.get("occupied", 0) > 100, "The initial Plotters graph is blank");
+require(r.get("mandelbrot_changed", false), "Mandelbrot selection did not redraw the canvas");
+require(starts_with(r.get("mandelbrot_status", ""), "Rendered Mandelbrot Set"), r.get("mandelbrot_status", ""));
+require(r.get("pitch", "") == "30", "The 3D pitch slider did not update");
+require(r.get("coord", "") == "Pitch:0.3, Yaw:0.5", r.get("coord", ""));
+require(r.get("page_errors", "") == "[]", r.get("page_errors", ""));
+require(r.get("failed_requests", "") == "[]", r.get("failed_requests", ""));
+let http_errors = json_parse(r.get("http_errors", "[]"));
+for (error in http_errors) {
+  require(ends_with(error.get("url", ""), "/favicon.ico"), json_stringify(error));
+}
+println("Plotters Canvas, Mandelbrot, and 3D control checks passed");

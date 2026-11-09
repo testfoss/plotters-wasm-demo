@@ -52,3 +52,7 @@ basic-http-server
 ```
 
 Then open http://127.0.0.1:4000/www
+
+## Testfoss demo
+
+The additive `testfoss-demo` branch builds the official Wasm demo, checks the Wasm target, and verifies Canvas, Mandelbrot, and 3D controls in Chromium through `lmwebtest`. See [the demo guide](testfoss/README.md) for commands and [the provenance record](durable-memory/testfoss-demo.md) for lab evidence and limitations. Run `./testfoss/build.sh` followed by `./testfoss/browser.sh`.

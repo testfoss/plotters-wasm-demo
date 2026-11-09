@@ -1,0 +1,8 @@
+# Testfoss demo provenance
+
+- Source: upstream `plotters-rs/plotters-wasm-demo` commit `3381bdf70243b80f86dfa1a27ae78e5354fffb89`.
+- Prior evidence: the isolated source-build lab recorded successful Wasm compilation, Cargo checks, production packaging, and Playwright Canvas and 3D-control checks at the same source pin.
+- Lab-proven commands: `wasm-pack build --target web`, `cargo check --locked --target wasm32-unknown-unknown`, npm installation in `www/`, and a production Vite build. The fork adds `--no-package-lock` to npm installation to keep upstream lockfile state untouched.
+- Browser coverage: initial 2D Canvas pixels, a loaded Wasm resource, Mandelbrot redraw, visible 3D controls, and the lab-proven pitch value 30 producing `Pitch:0.3, Yaw:0.5`. Chromium runs through `.lms` and `lmwebtest playwright`.
+
+Commands are in `testfoss/README.md`. The browser script uses port 8105 by default; set `TESTFOSS_PORT` and, if necessary, `TESTFOSS_URL` to override it. The Vite development server returned HTTP 403 for the external `pkg` Wasm in the lab, so only the production `dist` bundle is served here. A favicon 404 is an upstream cosmetic issue and is the only tolerated HTTP error. Host `cargo test --locked` was blocked in the lab by missing pkg-config/fontconfig metadata and is not presented as a passing check; the Wasm Cargo check is used instead. The repository has no top-level LICENSE file, despite the package's MIT declaration, and none is added. The additive lmwebtest scenario passed against the previously built demo. Heavy Rust/Wasm builds were not repeated while adding this fork content.

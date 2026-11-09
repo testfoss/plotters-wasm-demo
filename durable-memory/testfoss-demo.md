@@ -6,3 +6,7 @@
 - Browser coverage: initial 2D Canvas pixels, a loaded Wasm resource, Mandelbrot redraw, visible 3D controls, and the lab-proven pitch value 30 producing `Pitch:0.3, Yaw:0.5`. Chromium runs through `.lms` and `lmwebtest playwright`.
 
 Commands are in `testfoss/README.md`. The browser script uses port 8105 by default; set `TESTFOSS_PORT` and, if necessary, `TESTFOSS_URL` to override it. The Vite development server returned HTTP 403 for the external `pkg` Wasm in the lab, so only the production `dist` bundle is served here. A favicon 404 is an upstream cosmetic issue and is the only tolerated HTTP error. Host `cargo test --locked` was blocked in the lab by missing pkg-config/fontconfig metadata and is not presented as a passing check; the Wasm Cargo check is used instead. The repository has no top-level LICENSE file, despite the package's MIT declaration, and none is added. The additive lmwebtest scenario passed against the previously built demo. Heavy Rust/Wasm builds were not repeated while adding this fork content.
+
+## Remote verification
+
+GitHub Actions run 42643960612 passed the clean Wasm build, Wasm Cargo check, production Vite build, and Canvas/Mandelbrot/3D lmwebtest scenario.
